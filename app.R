@@ -20,6 +20,10 @@ ui <- list(
         class = "dropdown", actionLink("info", icon("info"))
       ),
       tags$li(
+        class = "dropdown",
+        boastUtils::surveyLink(name = "Probability_Applications")
+      ),
+      tags$li(
         class = "dropdown", tags$a(
           href = "https://shinyapps.science.psu.edu/", icon("home")
         )
@@ -31,14 +35,13 @@ ui <- list(
     sidebarMenu(
       id = "pages",
       menuItem("Overview", tabName = "overview", icon = icon("tachometer-alt")),
-      menuItem("Prerequisites", tabName = "concepts", icon = icon("book")),
-      menuItem("Game", tabName = "test", icon = icon("gamepad")),
+      menuItem("Prerequisites", tabName = "prerequisites", icon = icon("book")),
+      menuItem("Game", tabName = "game", icon = icon("gamepad")),
       menuItem("References", tabName = "references", icon = icon("leanpub"))
     ),
     tags$div(
       class = "sidebar-logo",
-      boastUtils::psu_eberly_logo("reversed"),
-      useShinyjs()
+      boastUtils::sidebarFooter()
     )
   ),
   ## Body ----
@@ -48,56 +51,46 @@ ui <- list(
       tabItem(
         tabName = "overview",
         h1("Probability Applications"),
-        p(
-          "This app quizzes your knowledge of turning probability applications
-          with context into mathematical expressions using a hangman game format."
-        ),
+        p("This app quizzes your knowledge of turning probability applications
+          with context into mathematical expressions using a hangman game format."),
         h2("Instructions"),
         tags$ul(
-          tags$li(
-            "You'll start this game with a little man on the top of a tree, and
+          tags$li("You'll start this game with a little man on the top of a tree, and
             you are trying to prevent his fall to the ground. If you provide a
             wrong answer, he falls to a lower branch and eventually to the ground.
             If you get 10 questions correct before he falls to the ground, you
-            have won the game and saved the little man!"
-          ),
-          tags$li(
-            "Read the given text before you make your choice. Make sure you
-            understand the scenario text provided."
-          ),
-          tags$li(
-            "If you need some extra help, click the 'hint' button (shown as a
-            question mark symbol)."
-          ),
+            have won the game and saved the little man!"),
+          tags$li("Read the given text before you make your choice. Make sure you
+            understand the scenario text provided."),
+          tags$li("If you need some extra help, click the 'hint' button (shown as a
+            question mark symbol)."),
           tags$li("After you select the choice, click 'Submit' to check your
                   answer."),
-          tags$li(
-            "Once you click 'Submit', you cannot revise your answer. You can
-            only click 'Next Question' to move on your challenge."
-          )
+          tags$li("Once you click 'Submit', you cannot revise your answer. You can
+            only click 'Next Question' to move on your challenge.")
         ),
         div(
           style = "text-align: center;",
           bsButton(
             inputId = "go",
-            label = "GO!",
+            label = "Prerequisites!",
             size = "large",
-            icon = icon("bolt")
+            icon = icon("book")
           )
         ),
         br(),
         br(),
         h3("Acknowledgements"),
-        p("This app was developed and coded by Yiyang Wang.",
+        p("This app was developed and coded by Yiyang Wang and updated by Shravani Samala.",
           br(),
           br(),
           br(),
-          div(class = "updated", "Last Update: 9/14/2020 by NJH.")
+          div(class = "updated", "Last Update: 7/14/2021 by SJS.")
         )
       ),
       ### Prerequisites Page ----
       tabItem(
-        tabName = "concepts",
+        tabName = "prerequisites",
         withMathJax(),
         h2("Prerequisites"),
         p("Here are some concepts you may want to review before playing the game."),
@@ -287,9 +280,9 @@ ui <- list(
             p("\\(f(x)=\\frac{1}{\\sqrt[2]{2\\pi\\sigma^2}}\\cdot
               exp\\left(\\frac{-\\left(x-\\mu\\right)^2}{2\\sigma^2}\\right)\\)",
               br(),
-              "(also sometimes called \\(\\phi\\)
-              with the CDF called \\(\\Phi\\))"
-              ),
+              "(For a standard normal with \\(\\mu=0\\) and \\(\\sigma=1\\), the
+              density is also sometimes called \\(\\phi\\) with the CDF called
+              \\(\\Phi\\))",),
             p("\\(\\text{E}\\!\\left[X\\right]=\\mu\\)"),
             p("\\(\\text{Var}\\!\\left[X\\right]=\\sigma^2\\)"),
             p("\\(M_{X}(t)=exp\\left(\\mu t + \\frac{\\sigma^2t^2}{2}\\right)\\)")
@@ -342,15 +335,15 @@ ui <- list(
           style = "text-align: center;",
           bsButton(
             inputId = "ready",
-            label = "I'm ready!",
+            label = "Go!",
             size = "large",
-            icon = icon("bolt")
+            icon = icon("gamepad")
           )
         )
       ),
       ## Game Page ----
       tabItem(
-        tabName = "test",
+        tabName = "game",
         withMathJax(),
         h2("Probability Application Game"),
         p("Exam the given context and then select the expression that addresses
@@ -359,6 +352,8 @@ ui <- list(
           column(
             width = 6,
             wellPanel(
+              style = "background-color: #FFFFFF",
+              
               h3("Context"),
               uiOutput("question"),
               br(),
@@ -366,7 +361,8 @@ ui <- list(
                 inputId = "hint",
                 label = "Hint",
                 icon = icon("question"),
-                size = "large"
+                size = "large", 
+                disabled = FALSE
               ),
               br(),
               radioGroupButtons(
@@ -379,6 +375,7 @@ ui <- list(
                   yes = icon("check-square"),
                   no = icon("square-o")
                 ),
+                
                 choices = list(
                   # "Pick the expression below that best addresses the question.",
                   "\\(\\frac{1}{4}\\)",
@@ -389,8 +386,14 @@ ui <- list(
                 width = "100%",
                 justified = FALSE,
                 individual = FALSE
+                
+                
               ),
+              
+              #Paste hint instead of pop-up 
+              uiOutput("hintDisplay"),
               br(),
+              
               fluidRow(
                 column(
                   width = 3,
@@ -434,6 +437,7 @@ ui <- list(
         uiOutput("math1"),
         uiOutput("math2")
       ),
+      
       tabItem(
         ### References ----
         tabName = "references",
@@ -513,59 +517,13 @@ server <- function(input, output, session) {
     }, error = function(err) { errorFunc(err, buttonId) })
   }
   
-  # Learning Locker Statement Generation
-  # .generateStatement <- function(session, verb = NA, object = NA, description = NA, value = NA) {
-  #   if (is.na(object)) {
-  #     object <- paste0("#shiny-tab-", session$input$pages)
-  #   } else {
-  #     object <- paste0("#", object)
-  #   }
-  # 
-  #   stmt <- list(
-  #     verb = verb,
-  #     object = list(
-  #       id = paste0(boastUtils::getCurrentAddress(session), object),
-  #       name = paste0(APP_TITLE),
-  #       description = description
-  #     )
-  #   )
-  # 
-  #   if (!is.na(value)) {
-  #     stmt$result <- list(
-  #       response = paste(value)
-  #     )
-  #   }
-  # 
-  #   statement <- rlocker::createStatement(stmt)
-  #   response <- rlocker::store(session, statement)
-  # 
-  #   return(response)
-  # }
-
-  # .generateAnsweredStatement <- function(session, verb = NA, object = NA, description = NA, interactionType = NA, response = NA, success = NA, completion = FALSE) {
-  #   statement <- rlocker::createStatement(list(
-  #     verb = verb,
-  #     object = list(
-  #       id = paste0(getCurrentAddress(session), "#", object),
-  #       name = paste0(APP_TITLE),
-  #       description = paste0("Identify the distribution of given text: ", description),
-  #       interactionType = interactionType
-  #     ),
-  #     result = list(
-  #       success = success,
-  #       response = response,
-  #       completion = completion
-  #     )
-  #   ))
-  # 
-  #   return(rlocker::store(session, statement))
-  # }
-
+  
   observeEvent(input$info, {
     sendSweetAlert(
       session = session,
       title = "Instructions:",
-      text = "This app quizzes your knowledge of turning probability applications with context into mathematical expressions using a hangman game format.",
+      text = "This app quizzes your knowledge of turning probability applications 
+              with context into mathematical expressions using a hangman game format.",
       type = "info"
     )
   })
@@ -582,21 +540,44 @@ server <- function(input, output, session) {
 
   # Go button
   observeEvent(input$go, {
-    updateTabItems(session, "pages", "test")
-    updateButton(session, "submit", disabled = FALSE)
-    updateButton(session, "nextq", disabled = FALSE)
+    updateTabItems(
+      session = session, 
+      inputId = "pages", 
+      selected = "prerequisites")
+    updateButton(
+      session = session, 
+      inputId = "submit", 
+      disabled = FALSE)
+    updateButton(
+      session = session, 
+      inputId = "nextq", 
+      disabled = FALSE)
   })
 
   # Ready button
   observeEvent(input$ready, {
-    updateTabItems(session, "pages", "information")
+    updateTabItems(
+      session = session, 
+      inputId = "pages", 
+      selected = "game")
   })
 
   # Reset button
   observeEvent(input$restart, {
-    updateButton(session, "submit", disabled = FALSE)
-    updateButton(session, "nextq", disabled = FALSE)
-    updateButton(session, "restart", disabled = FALSE)
+    updateButton(
+      session = session, 
+      inputId = "submit", 
+      disabled = FALSE)
+    updateButton(
+      session = session, 
+      inputId = "nextq", 
+      disabled = FALSE)
+    updateButton(
+      session = session, 
+      inputId = "restart", 
+      disabled = FALSE)
+    
+               
     Qs <<- nrow(bank)
     Qs_array <<- c(1:Qs)
     id <- 1
@@ -609,6 +590,13 @@ server <- function(input, output, session) {
       hint <<- withMathJax(bank[id, 3])
       return(bank[id, 2])
     })
+    
+    output$hint <- renderUI({
+      withMathJax()
+      hint <<- withMathJax(bank[id, 3])
+      return(bank[id, 3])
+    })
+    
     updateRadioGroupButtons(session, "mc1",
       choices = list(
         bank[id, "A"],
@@ -632,8 +620,6 @@ server <- function(input, output, session) {
     output$mark <- renderUI({
       img(src = NULL, width = 50)
     })
-    value[["mistake"]] <<- 0
-    value$correct <<- 0
   })
 
   # Print out a question
@@ -699,6 +685,11 @@ server <- function(input, output, session) {
           img(src = NULL, width = 50)
         })
       })
+      
+      ##HINT###
+      output$hintDisplay <- renderUI({
+        return(NULL)
+      })
     }
     else if (length(Qs_array) == 1) {
       id <<- Qs_array[1]
@@ -708,8 +699,13 @@ server <- function(input, output, session) {
         output$question <- renderUI({
           return(withMathJax(bank[id, 2]))
         })
-        updateButton(session, "submit", disabled = FALSE)
-        updateRadioGroupButtons(session, "mc1",
+        updateButton(
+          session = session, 
+          inputId = "submit", 
+          disabled = FALSE)
+        updateRadioGroupButtons(
+          session = session, 
+          inputId = "mc1",
           selected = character(0),
           choices = list(
             bank[id, "A"],
@@ -733,11 +729,25 @@ server <- function(input, output, session) {
           img(src = NULL, width = 50)
         })
       })
+      
+      ##HINT###
+      output$hintDisplay <- renderUI({
+        return(NULL)
+      })
     }
     else {
-      updateButton(session, "submit", disabled = TRUE)
-      updateButton(session, "nextq", disabled = TRUE)
-      updateButton(session, "restart", disabled = FALSE)
+      updateButton(
+        session = session, 
+        inputId = "submit", 
+        disabled = TRUE)
+      updateButton(
+        session = session, 
+        inputId = "nextq", 
+        disabled = TRUE)
+      updateButton(
+        session = session, 
+        inputId = "restart", 
+        disabled = FALSE)
       sendSweetAlert(
         session = session,
         title = "Run out of question",
@@ -746,6 +756,9 @@ server <- function(input, output, session) {
         h4("Run out of question. Please click Restart to start over")
       )
       output$question <- renderUI({
+        return(NULL)
+      })
+      output$hintDisplay <- renderUI({
         return(NULL)
       })
       updateRadioGroupButtons(session, "mc1",
@@ -794,13 +807,34 @@ server <- function(input, output, session) {
           closeOnClickOutside = TRUE,
           h4("Congrats! You Win! Please click Restart to start over.")
         )
-        updateButton(session, "submit", disabled = TRUE)
-        updateButton(session, "nextq", disabled = TRUE)
-        updateButton(session, "restart", disabled = FALSE)
+        updateButton(
+          session = session, 
+          inputId = "submit", 
+          disabled = TRUE)
+        updateButton(
+          session = session, 
+          inputId = "nextq", 
+          disabled = TRUE)
+        updateButton(
+          session = session, 
+          inputId = "restart", 
+          disabled = FALSE)
+        output$hintDisplay <- renderUI({
+          return(NULL)
+        })
       }
       else {
-        updateButton(session, "submit", disabled = TRUE)
-        updateButton(session, "nextq", disabled = FALSE)
+        updateButton(
+          session = session, 
+          inputId = "submit", 
+          disabled = TRUE)
+        updateButton(
+          session = session, 
+          inputId = "nextq", 
+          disabled = FALSE)
+        output$hintDisplay <- renderUI({
+          return(NULL)
+        })
       }
     } else {
       # print("wrong")
@@ -815,12 +849,33 @@ server <- function(input, output, session) {
           closeOnClickOutside = TRUE,
           h4("You lost. Please click Restart to start over")
         )
-        updateButton(session, "submit", disabled = TRUE)
-        updateButton(session, "nextq", disabled = TRUE)
-        updateButton(session, "restart", disabled = FALSE)
+        updateButton(
+          session = session, 
+          inputId = "submit", 
+          disabled = TRUE)
+        updateButton(
+          session = session, 
+          inputId = "nextq", 
+          disabled = TRUE)
+        updateButton(
+          session = session, 
+          inputId = "restart",
+          disabled = FALSE)
+        output$hintDisplay <- renderUI({
+          return(NULL)
+        })
       } else {
-        updateButton(session, "submit", disabled = TRUE)
-        updateButton(session, "nextq", disabled = FALSE)
+        updateButton(
+          session = session, 
+          inputId = "submit", 
+          disabled = TRUE)
+        updateButton(
+          session = session, 
+          inputId = "nextq",
+          disabled = FALSE)
+        output$hintDisplay <- renderUI({
+          return(NULL)
+        })
       }
     }
 
@@ -862,14 +917,28 @@ server <- function(input, output, session) {
   })
 
   ### PRINT HINTS###
-  observeEvent(input$hint, {
-    sendSweetAlert(
-      session = session,
-      title = "Hint:",
-      type = NULL,
-      closeOnClickOutside = TRUE,
-      p(bank[id, 3])
-    )
+  observeEvent(
+    eventExpr = input$hint, 
+    handlerExpr = {
+      output$math1 <- renderUI({
+        withMathJax()
+      })
+      output$math2 <- renderUI({
+        withMathJax()
+      })
+      withMathJax()
+      output$hintDisplay <- renderUI({
+        p(tags$b("Hint:"), bank[id, 3])
+    })
+  
+    
+    # sendSweetAlert(
+    #   session = session,
+    #   title = "Hint:",
+    #   type = NULL,
+    #   closeOnClickOutside = TRUE,
+    #   p(bank[id, 3])
+    # )
     # .generateStatement(session, object = "hint", verb = "interacted", description = "Hint", value = bank[id, 3])
   })
 
@@ -910,4 +979,4 @@ server <- function(input, output, session) {
   })
 }
 
-boastApp(server = server, ui = ui)
+boastUtils::boastApp(ui = ui, server = server)
